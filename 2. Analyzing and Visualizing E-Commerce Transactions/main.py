@@ -7,7 +7,7 @@ def generate_array(row_nums = 6):
     transaction_ids = np.arange(1000, 1000 + row_nums)
     user_ids = rng.integers(1, 6, row_nums)
     product_ids = rng.integers(1, 4, row_nums)
-    quantities = rng.integers(0, 3, row_nums)
+    quantities = rng.integers(0, 50, row_nums)
     prices = np.round(rng.uniform(1.00, 100.00, row_nums), 2)
     timestamps = np.arange('2024-07', row_nums, dtype='datetime64[D]')
 
@@ -66,7 +66,7 @@ def prices_from_float_to_int(transactions):
     return updated_transactions
 
 def show_types(transactions):
-    print(f'{transactions.dtype}', 'types')
+    print(f'{transactions.dtype}', 'types\n')
 
 def product_quantity_only(transactions):
     return np.array(np.column_stack((transactions['product_id'], transactions['quantity'])));
@@ -123,7 +123,7 @@ def date_range_slicing(transactions, start_date, end_date):
     return transactions[np.array(mask)]
 
 def print_array(arr, msg="Transformed transactions"):
-    print(f"{msg}\n{arr}]\n")
+    print(f"{msg}\n{arr}\n")
 
 def main():
 
@@ -131,10 +131,12 @@ def main():
     print_array(array, "initial")
 
     total = total_revenue(array)
-    print(f'{total} , total revenue')
+    print(f'{total}\n , total revenue')
+    assert total > 0, "Invalid total calculation"
 
     unique_users = unique_users_num(array)
     print_array(unique_users, "unique users")
+    assert unique_users > 0, "Users can't be absent"
 
     most_purchased = most_purchased_product(array)
     print_array(most_purchased, "Most purchased product Id")
@@ -146,9 +148,11 @@ def main():
 
     price_quant_arr =  product_quantity_only(array)
     print_array(price_quant_arr, "only prices and q-ties")
+    assert price_quant_arr.shape[1] == 2, "Invalid shape of price_quantity arr"
 
     all_users_transactions = transaction_per_user(array)
     print_array(all_users_transactions, "transactions for all users")
+    assert all_users_transactions.shape > (0,0), "Transactions can't be absent"
 
     qty_equals_0 = filter_transactions(array, lambda x: x == 0)
     print_array(qty_equals_0, 'transactions with qty == 0')
@@ -165,7 +169,7 @@ def main():
     start_date2 = '2024-07-03'
     end_date2 = '2024-07-04'
     compare_revenue = revenue_comparison(array, start_date1, end_date1, start_date2, end_date2)
-    print(compare_revenue)
+    print(f'{compare_revenue}\n')
 
     user_transactions = filter_transactions(array, filter=lambda x: x == 1, field_name='user_id')
     print_array(user_transactions, "transactions for user, hardcoded first user")
