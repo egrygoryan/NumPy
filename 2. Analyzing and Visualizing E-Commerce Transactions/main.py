@@ -42,11 +42,30 @@ def unique_users_num(transactions):
     return len(np.unique(transactions['user_id']))
 
 def most_purchased_product(transactions):
-    # count products_id and aggregate their weight(quantity)
-    aggregated_products = np.bincount(transactions['product_id'], weights=transactions['quantity'])
+    product_ids = transactions['product_id']
+    quantities = transactions['quantity']
     
-    # return max quantity
-    return np.argmax(aggregated_products)
+    # obrain unique product_id
+    unique_product_ids = np.unique(product_ids)
+    
+    # store unique product_ids as key with initial qty as 0
+    total_qty_per_product = {product_id: 0 for product_id in unique_product_ids}
+    
+    # iterate through each unique product
+    for product_id in unique_product_ids:
+        # create mask for array where we will get quantities for provided product_id
+        mask = product_ids == product_id
+        # apply mask and write aggregated sum of qties into key
+        total_qty_per_product[product_id] = np.sum(quantities[mask])
+    
+    # get max qty value
+    max_quantity = max(total_qty_per_product.values())
+    
+    # retrieve all product_ids with the maximum quantity
+    # convert values into py ints
+    most_purchased = [int(product_id) for product_id, qty in total_qty_per_product.items() if qty == max_quantity]
+    
+    return most_purchased
 
 def prices_from_float_to_int(transactions):
     changed_type = np.dtype([
@@ -122,11 +141,43 @@ def date_range_slicing(transactions, start_date, end_date):
 
     return transactions[np.array(mask)]
 
+def top_products(transactions, top):
+    product_ids = transactions['product_id']
+    quantities = transactions['quantity']
+    prices = transactions['price']
+    
+    # revenue for a transaction
+    revenues = quantities * prices
+    
+    # obtain unique product_id
+    unique_product_ids = np.unique(product_ids)
+    
+    # calculate total revenue per product
+    total_revenue_per_product = {}
+    for product_id in unique_product_ids:
+        mask = product_ids == product_id
+        total_revenue_per_product[product_id] = np.sum(revenues[mask])
+    
+    # sort products by their revenues desc
+    sorted_product_ids = sorted(total_revenue_per_product.keys(), key=lambda x: total_revenue_per_product[x], reverse=True)
+
+    # take top x product IDs
+    top_product_ids = sorted_product_ids[:top]
+    
+    # check if top products are in product_id column
+    # i didn't come up with an idea, how to show in desc order 
+    # sometimes isin() just takes range and isn't strict to provided values
+    mask_top_products = np.isin(product_ids, top_product_ids)
+    
+    # apply mask to transactions
+    return transactions[mask_top_products][::-1]
+
 def print_array(arr, msg="Transformed transactions"):
     print(f"{msg}\n{arr}\n")
 
-def main():
 
+def main():
+    # used 6 rows for brevity
     array = generate_array(6)
     print_array(array, "initial")
 
@@ -141,7 +192,12 @@ def main():
     most_purchased = most_purchased_product(array)
     print_array(most_purchased, "Most purchased product Id")
 
-    types = show_types(array)
+    # used hardcoded 3 for brevity
+    # can be applied any value for related shape
+    top_products_id = top_products(array, top=3)
+    print_array(top_products_id, "transactions of the top X products by revenue")
+
+    show_types(array)
 
     cast_types = prices_from_float_to_int(array)
     print_array(cast_types, "casted float to int")
@@ -177,6 +233,5 @@ def main():
     sliced_dates = date_range_slicing(array, start_date2, end_date2)
     print_array(sliced_dates, "only transactions within certain date range")
 
-    
 if __name__ == '__main__':
     main()
